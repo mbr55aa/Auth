@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+<script>
+    function delete_flash(flash){
+        $(flash).parent().remove()
+    }
+</script>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Сервис авторизации</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css" />
+</head>
+
+<body>
+    <ul>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% if category == 'error'%}
+                    <div class="notification is-danger">
+
+                {% elif category == 'info' %}
+                    <div class="notification is-info">
+
+                {% elif category == 'warning' %}
+                    <div class="notification is-warning">
+
+                {% endif %}
+
+                    {{ message }}
+                    <button onclick="delete_flash(this)" type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+    {% endwith %}
+    </ul>
+    <section class="hero is-primary is-fullheight">
+
+        <div class="hero-head">
+            <nav class="navbar">
+                <div class="container">
+
+                    <div id="navbarMenuHeroA" class="navbar-menu">
+                        <div class="navbar-end">
+                            {% if g.user %}
+                              <span class="navbar-item">Выполнен вход под пользователем "{{ g.user.first_name }}"</span>
+                              <a href="{{ url_for('main.profile') }}" class="navbar-item">
+                                  Профиль
+                              </a>
+                              <a href="{{ url_for('auth.logout') }}" class="navbar-item">
+                                  Выход
+                              </a>
+                            {% else %}
+                              <a href="{{ url_for('auth.sign_in') }}" class="navbar-item">
+                                  Вход
+                              </a>
+                              <a href="{{ url_for('auth.sign_up') }}" class="navbar-item">
+                                  Регистрация
+                              </a>
+                            {% endif %}
+                            <a href="{{ url_for('main.index') }}" class="navbar-item">
+                                Главная
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <div class="hero-body">
+            <div class="container has-text-centered">
+               {% block content %}
+               {% endblock %}
+            </div>
+        </div>
+    </section>
+</body>
+
+</html>

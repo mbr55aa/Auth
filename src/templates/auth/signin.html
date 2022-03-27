@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="column is-4 is-offset-4">
+    <h3 class="title">Страница входа пользователя</h3>
+    <div class="box">
+        <form method="POST" action="/auth/sign_in">
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="text" name="login" placeholder="Логин или email адрес" autofocus="">
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="password" name="password" placeholder="Введите пароль">
+                </div>
+            </div>
+            <div class="field">
+                <label class="checkbox">
+                    <input type="checkbox">
+                    Запомнить меня на этом устройстве
+                </label>
+            </div>
+            <button class="button is-block is-info is-large is-fullwidth">Вход</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

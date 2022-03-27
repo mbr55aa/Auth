@@ -1,0 +1,472 @@
+swagger: "2.0"
+info:
+  description: ""
+  version: "1.0.0"
+  title: "Сервис авторизации"
+basePath: ""
+tags:
+- name: "user"
+  description: "Регистрация и авторизация пользователя"
+- name: "role"
+  description: "CRUD для управления ролями в базе"
+- name: "user role"
+  description: "Управление ролями пользователя"
+schemes:
+- "https"
+- "http"
+paths:
+  /sign_up:
+    post:
+      tags:
+      - "user"
+      summary: "Зарегистрировать нового пользователя"
+      description: "Получаем заполненную форму, проверяем что такого пользователя еще нет и регистрируем"
+      operationId: "addUser"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Данные пользователя для регистрации"
+        required: true
+        schema:
+          $ref: "#/definitions/User"
+      responses:
+        "200":
+          description: "Created"
+          schema:
+            $ref: "#/definitions/Ok"
+        "409":
+          description: "Что-то пошло не так, такой email уже есть"
+          schema:
+            $ref: "#/definitions/Error"
+  /sign_in:
+    post:
+      tags:
+      - "user"
+      summary: "Выдать токены в обмен на валидный логин и пароль"
+      description: "Получаем логин и пароль, сверяемся с Postgres, если все ок — выдаем пару токенов, refresh-токен сохраняем в Redis как валидный для данного устройства"
+      operationId: "loginUser"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Логин и пароль для входа"
+        required: true
+        schema:
+          $ref: "#/definitions/Login"
+      responses:
+        "200":
+          description: "Ок, выдаем пользователю токены"
+          schema:
+            $ref: "#/definitions/Tokens"
+        "401":
+          description: "Почта или пароль не прошли проверку"
+          schema:
+            $ref: "#/definitions/Error"
+
+  /refresh_token:
+    post:
+      tags:
+      - "user"
+      summary: "Выдаёт новую пару токенов в обмен на корректный refresh-токен"
+      description: "Проверяем что refresh-токен есть в redis в списке активных токенов и нет пометки что пользователь вышел везде после выпуска токена, если все ок — выдаем новую пару токенов"
+      operationId: "refreshToken"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Refresh-токен"
+        required: true
+        schema:
+          $ref: "#/definitions/RefreshToken"
+      responses:
+        "200":
+          description: "Ок, выдаем пользователю токены"
+          schema:
+            $ref: "#/definitions/Tokens"
+        "401":
+          description: "Новые токены выдать не можем, придется перелогиниться"
+          schema:
+            $ref: "#/definitions/Error"
+
+  /change_password:
+    patch:
+      tags:
+      - "user"
+      summary: "Изменить данные пользователя"
+      description: ""
+      operationId: "patchUser"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Передаем новые данные пользователя"
+        required: true
+        schema:
+          $ref: "#/definitions/UserWithAccess"
+      responses:
+        "200":
+          description: "Ok"
+          schema:
+            $ref: "#/definitions/Ok"
+        "409":
+          description: "Что-то пошло не так, такой email уже есть"
+          schema:
+            $ref: "#/definitions/Error"
+
+  /logout:
+    post:
+      tags:
+      - "user"
+      summary: "Разлогиниться на текущем устройстве"
+      description: "Удаляет acces-токен на клиенте, также запоминает данный acces-токен в Redis как невалидный с ttl = оставшейся времени жизни токена и удаляет refresh-токен"
+      operationId: "logout"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Передаем токены"
+        required: true
+        schema:
+          $ref: "#/definitions/AccessToken"
+      responses:
+        "200":
+          description: "Все ок, разлогинили"
+          schema:
+            $ref: "#/definitions/Ok"
+        "401":
+          description: "Юзер не залогинен"
+          schema:
+            $ref: "#/definitions/Error"
+
+  /role:
+    post:
+      tags:
+      - "role"
+      summary: "Добавить новую роль"
+      description: "Для управления ролями у пользователя должны быть соответствующие права"
+      operationId: "addRole"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Название"
+        required: true
+        schema:
+          $ref: "#/definitions/RoleWithAccess"
+      responses:
+        "200":
+          description: "Created"
+          schema:
+            $ref: "#/definitions/Ok"
+        "403":
+          description: "Нет прав для управления ролями"
+          schema:
+            $ref: "#/definitions/Error"
+    get:
+      tags:
+      - "role"
+      summary: "Получить список всех ролей"
+      description: "Для управления ролями у пользователя должны быть соответствующие права"
+      operationId: "getRole"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Токен с нужными правами"
+        required: true
+        schema:
+          $ref: "#/definitions/AccessToken"
+      responses:
+        "200":
+          description: "Ок, выдаем список всех ролей"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Role"
+        "403":
+          description: "Нет прав для управления ролями"
+          schema:
+            $ref: "#/definitions/Error"
+  /role/{role_id}:
+    patch:
+      tags:
+      - "role"
+      summary: "Изменить роль"
+      description: "Для управления ролями у пользователя должны быть соответствующие права"
+      operationId: "patchRole"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+        - name: "role_id"
+          in: "path"
+          description: "Id роли"
+          required: true
+          type: "string"
+        - name: "body"
+          in: "body"
+          description: "Id роли"
+          required: true
+          schema:
+            $ref: "#/definitions/RoleWithAccess"
+      responses:
+        "200":
+          description: "Ок"
+          schema:
+            $ref: "#/definitions/Ok"
+        "403":
+          description: "Нет прав для управления ролями"
+          schema:
+            $ref: "#/definitions/Error"
+    delete:
+      tags:
+      - "role"
+      summary: "Удалить роль"
+      description: "Для управления ролями у пользователя должны быть соответствующие права"
+      operationId: "deleteRole"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+        - name: "role_id"
+          in: "path"
+          description: "Id роли"
+          required: true
+          type: "string"
+        - in: "body"
+          name: "body"
+          description: "Токен с нужными правами"
+          required: true
+          schema:
+            $ref: "#/definitions/AccessToken"
+      responses:
+        "204":
+          description: "Deleted"
+          schema:
+            $ref: "#/definitions/Ok"
+        "403":
+          description: "Нет прав для управления ролями"
+          schema:
+            $ref: "#/definitions/Error"
+  /user_role/{user_id}:
+    post:
+      tags:
+      - "user role"
+      summary: "Назначить пользователю роль"
+      description: "В запросе передается access-токен пользователя с достаточными правами"
+      operationId: "addUserRole"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+        - name: "user_id"
+          in: "path"
+          description: "Id пользователя"
+          required: true
+          type: "string"
+        - in: "body"
+          name: "body"
+          description: "Id роли"
+          required: true
+          schema:
+            $ref: "#/definitions/RoleIdWithAccess"
+      responses:
+        "200":
+          description: "Ок"
+          schema:
+            $ref: "#/definitions/Ok"
+        "403":
+          description: "Нет прав"
+          schema:
+            $ref: "#/definitions/Error"
+    delete:
+      tags:
+      - "user role"
+      summary: "Отобрать у пользователя роль"
+      description: "В запросе передается access-токен пользователя с достаточными правами"
+      operationId: "deleteUserRole"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+        - name: "user_id"
+          in: "path"
+          description: "Id пользователя"
+          required: true
+          type: "string"
+        - in: "body"
+          name: "body"
+          description: "Id роли и токен с нужными правами"
+          required: true
+          schema:
+            $ref: "#/definitions/RoleIdWithAccess"
+      responses:
+        "204":
+          description: "Ок"
+          schema:
+            $ref: "#/definitions/Ok"
+        "403":
+          description: "Нет прав"
+          schema:
+            $ref: "#/definitions/Error"
+    get:
+      tags:
+      - "user role"
+      summary: "Проверить роли пользователя"
+      description: "В запросе передается access-токен пользователя с достаточными правами"
+      operationId: "getUserRole"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+        - name: "user_id"
+          in: "path"
+          description: "Id пользователя"
+          required: true
+          type: "string"
+        - in: "body"
+          name: "body"
+          description: "Токен с нужными правами"
+          required: true
+          schema:
+            $ref: "#/definitions/AccessToken"
+      responses:
+        "200":
+          description: "Ок, выдаем список всех ролей пользователя"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Role"
+        "403":
+          description: "Нет прав"
+          schema:
+            $ref: "#/definitions/Error"
+
+definitions:
+  User:
+    type: "object"
+    properties:
+      email:
+        type: "string"
+      password:
+        type: "string"
+      first_name:
+        type: "string"
+      last_name:
+        type: "string"
+  UserWithAccess:
+    type: "object"
+    properties:
+      access_token:
+        type: "string"
+      email:
+        type: "string"
+      password:
+        type: "string"
+      first_name:
+        type: "string"
+      last_name:
+        type: "string"
+
+  UserOut:
+    type: "object"
+    properties:
+      email:
+        type: "string"
+      first_name:
+        type: "string"
+      last_name:
+        type: "string"
+  Login:
+    type: "object"
+    properties:
+      email:
+        type: "string"
+      password:
+        type: "string"
+  Tokens:
+    type: "object"
+    properties:
+      access_token:
+        type: "string"
+      refresh_token:
+        type: "string"
+  RefreshToken:
+    type: "object"
+    properties:
+      refresh_token:
+        type: "string"
+  AccessToken:
+    type: "object"
+    properties:
+      access_token:
+        type: "string"
+  Role:
+    type: "object"
+    properties:
+      name:
+        type: "string"
+      description:
+        type: "string"
+  RoleWithAccess:
+    type: "object"
+    properties:
+      access_token:
+        type: "string"
+      name:
+        type: "string"
+      rights:
+        type: "string"
+      description:
+        type: "string"
+  RoleIdWithAccess:
+    type: "object"
+    properties:
+      access_token:
+        type: "string"
+      id:
+        type: "string"
+  Ok:
+    type: "object"
+    properties:
+      status:
+        type: "string"
+  Error:
+    type: "object"
+    properties:
+      error:
+        type: "string"
+  AuthHistory:
+    type: "object"
+    properties:
+      date:
+        type: "string"
+      user_agent:
+        type: "string"

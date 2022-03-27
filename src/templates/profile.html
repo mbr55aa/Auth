@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="title">
+  Пользователь {{ g.user.first_name }}.
+</h1>
+    <div style="alignment: left">
+        <div class="field">
+            <label>Логин:</label>
+            <label>{{ g.user.login }}</label>
+        </div>
+        <div class="field">
+            <label>Имя пользователя:</label>
+            <label>{{ g.user.first_name }}</label>
+        </div>
+        <div class="field">
+            <label>Фамилия пользователя:</label>
+            <label>{{ g.user.last_name }}</label>
+        </div>
+        <div>
+            <label>Email адрес:</label>
+            <label>{{ g.user.email }}</label>
+        </div>
+    </div>
+
+    <div>
+    <form method="POST" action="/auth/change-password" style="width: 250px">
+            <div class="field">
+                <div class="control">
+                    <input class="input" type="password" name="old_password" placeholder="Старый пароль">
+                </div>
+            </div>
+            <div class="field">
+                <div class="control">
+                    <input class="input" type="password" name="new_password" placeholder="Новый пароль">
+                </div>
+            </div>
+            <input name="email" value="{{ g.user.email }}" hidden="True">
+            <button class="button is-block is-info is-large is-fullwidth">Сменить пароль</button>
+        </form>
+    </div>
+{% endblock %}

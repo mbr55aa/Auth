@@ -1,0 +1,79 @@
+version: "3.8"
+services:
+  nginx:
+    image: nginx
+    restart: unless-stopped
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+    ports:
+      - "5000:5000"
+    depends_on:
+      - auth_flask
+    networks:
+      - practicum_network
+
+  db:
+    image: "postgres:13-alpine"
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    env_file: ./config/.env
+    networks:
+      - practicum_network
+
+  redis:
+    image: redis:6-alpine
+    restart: always
+    volumes:
+      - redisdata:/data
+    networks:
+      - practicum_network
+
+  auth_flask:
+    build:
+      context: .
+      dockerfile: ./docker/flask/Dockerfile
+    depends_on:
+      - db
+      - redis
+    env_file: ./config/.env
+    volumes:
+      - ./src:/code
+    networks:
+      - practicum_network
+
+#  elasticsearch:
+#    image: ghcr.io/hirotasoshu/movies-es:latest
+#    volumes:
+#      - elasticdata:/usr/share/elasticsearch/data
+#
+#  redis-cache:
+#    image: redis:6-alpine
+#    command: --port 6380
+#    restart: always
+
+#  movies-async-api:
+#    image: ghcr.io/pavlom10/movies-async-api-2@sha256:c0641a5f215233140fb7e4012c3fc050c278ab2dc491232667d7cebe91b9546e
+#    ports:
+#      - "8888:8888"
+#    depends_on:
+#      - redis-cache
+#      - elasticsearch
+#    env_file: ./config/.env
+#    command: /start-reload.sh
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  practicum_network:
+    name: practicum_network

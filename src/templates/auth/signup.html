@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="column is-4 is-offset-4">
+    <h2 class="title">Регистрация нового пользователя</h2>
+    <div class="box">
+        <form method="POST" action="/auth/sign_up">
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="text" name="login" placeholder="Логин" autofocus="" required="True">
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="email" name="email" placeholder="Email адрес" required="True">
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="text" name="first_name" placeholder="Имя">
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="text" name="last_name" placeholder="Фамилия">
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="password" name="password" placeholder="Пароль" required="True">
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="control">
+                    <input class="input is-large" type="password" name="password_again" placeholder="Пароль еще раз">
+                </div>
+            </div>
+
+            <button class="button is-block is-info is-large is-fullwidth">Зарегистрироваться</button>
+        </form>
+        <hr>
+        <form method="POST" action="/oauth/vk">
+            <button class="button is-block is-info is-large is-fullwidth">Регистрация через ВК</button>
+        </form>
+        <hr>
+        <form method="POST" action="/oauth/yandex">
+            <button class="button is-block is-info is-large is-fullwidth">Регистрация через Яндекс</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
