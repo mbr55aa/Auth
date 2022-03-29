@@ -1,8 +1,3 @@
-# Сервис авторизации
-
-К концу спринта у вас должен получиться сервис авторизации 
-с системой ролей, написанный на Flask с использованием gevent.
-
 ## Локальная разработка в docker
 
 1. Создать .env файл на основе .env.template:
@@ -59,12 +54,4 @@ $ flask user create <user_name> <user@email> <password>
 Перейти в Jaeger UI
 ```
 http://127.0.0.1:16686/
-```
-
-## Интеграция с другими сервисами через Protobuf
-Для получения информации о пользователе 
-сервис должен отправить access_token на auth/profile.
-Пример запроса из сервиса async_api к сервису auth
-```
-https://github.com/pavlom10/Async_API_sprint_2/blob/7e46f0b4e0d80bafb234f08622e3e81201d10ec9/src/api/v1/film.py#L69
 ```
